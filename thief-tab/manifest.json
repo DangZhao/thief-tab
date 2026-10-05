@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "minimum_chrome_version": "103",
+  "name": "Thief Tab",
+  "version": "1.8.3",
+  "description": "把速记文字显示在标签页标题上，配合浏览器垂直标签栏随手查看。",
+  "permissions": ["storage", "unlimitedStorage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["keys.js", "content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_title": "打开速记页",
+    "default_icon": {
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "128": "icons/icon128.png"
+  }
+}

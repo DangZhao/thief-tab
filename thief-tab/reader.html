@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 品牌名须与 manifest.json 的 name 及 reader.js 的 NEUTRAL_TITLE 保持完全一致（伪装中性标题依赖它） -->
+<title>Thief Tab</title>
+<link rel="icon" type="image/png" href="icons/icon128.png">
+<link rel="stylesheet" href="reader.css">
+</head>
+<body>
+<div id="notice" hidden></div>
+
+<!-- 列表 -->
+<main id="shelf-view">
+  <header class="topbar">
+    <h1>Thief Tab</h1>
+    <div class="actions">
+      <button id="import-btn" class="btn btn-primary" type="button">导入文件</button>
+      <button id="open-settings-shelf" class="btn" type="button">设置</button>
+    </div>
+  </header>
+  <p id="drop-hint">把 .txt / .epub 文件拖到本页任意位置即可导入（单文件 ≤ 50MB）</p>
+  <p id="shelf-empty" hidden>列表还是空的，先导入一个 .txt 或 .epub 吧</p>
+  <ul id="book-list"></ul>
+  <input type="file" id="file-input" accept=".txt,.epub,text/plain,application/epub+zip" multiple hidden>
+</main>
+
+<!-- 速记 -->
+<main id="read-view" hidden>
+  <header class="topbar">
+    <button id="back-to-shelf" class="btn" type="button">‹ 列表</button>
+    <div id="read-book-name" class="read-book-name"></div>
+    <div class="actions">
+      <button id="toc-btn" class="btn" type="button">目录</button>
+      <button id="open-settings-read" class="btn" type="button">设置</button>
+    </div>
+  </header>
+  <div class="searchbar">
+    <input type="text" id="search-input" placeholder="搜索本文内容，回车跳转">
+    <button id="search-prev" class="btn" type="button" title="上一个（Shift+回车）">↑</button>
+    <button id="search-next" class="btn" type="button" title="下一个（回车）">↓</button>
+    <span id="search-count"></span>
+  </div>
+  <section class="stage">
+    <div id="disguise-hint" class="disguise-hint" hidden>已暂停 · 按 Esc 或老板键继续</div>
+    <div id="page-text"></div>
+    <div id="page-indicator">第 1 / 1 页</div>
+    <div id="read-progress"></div>
+    <div class="pager">
+      <button id="prev-btn" class="btn" type="button">← 上一页</button>
+      <button id="next-btn" class="btn" type="button">下一页 →</button>
+    </div>
+    <p class="hint">← → 翻页 · 小键盘 4/6 任意页面翻页 · Esc / 老板键 切换伪装 · 内容同时显示在标签页标题上</p>
+  </section>
+</main>
+
+<!-- 设置 -->
+<main id="settings-view" hidden>
+  <header class="topbar">
+    <button id="settings-back" class="btn" type="button">‹ 返回</button>
+    <h1>设置</h1>
+    <span></span>
+  </header>
+  <section class="settings-form">
+    <label class="row">
+      <span>页大小（8–60 字）</span>
+      <input type="number" id="set-page-size" min="8" max="60" step="1">
+    </label>
+    <label class="row">
+      <span>翻页方式</span>
+      <select id="set-flip-mode">
+        <option value="block">整体翻页</option>
+        <option value="line">逐行翻页</option>
+      </select>
+    </label>
+    <label class="row">
+      <span>导入编码</span>
+      <select id="set-encoding">
+        <option value="auto">自动检测</option>
+        <option value="utf-8">UTF-8</option>
+        <option value="gbk">GBK</option>
+        <option value="gb18030">GB18030</option>
+        <option value="big5">Big5</option>
+      </select>
+    </label>
+    <label class="row">
+      <span>伪装标题</span>
+      <input type="text" id="set-disguise-title" placeholder="新标签页">
+    </label>
+    <label class="row">
+      <span>标题前缀伪装</span>
+      <input type="checkbox" id="set-prefix-enabled">
+    </label>
+    <label class="row" id="prefix-text-row" hidden>
+      <span>前缀文案</span>
+      <input type="text" id="set-prefix-text" placeholder="拼接在内容前，如：资料-">
+    </label>
+    <label class="row">
+      <span>页面显示内容</span>
+      <input type="checkbox" id="set-show-page-text">
+    </label>
+    <label class="row">
+      <span>上一页按键</span>
+      <input type="text" id="set-key-prev" class="key-capture" readonly>
+    </label>
+    <label class="row">
+      <span>下一页按键</span>
+      <input type="text" id="set-key-next" class="key-capture" readonly>
+    </label>
+    <label class="row">
+      <span>老板键</span>
+      <input type="text" id="set-key-boss" class="key-capture" readonly>
+    </label>
+    <div class="row">
+      <span></span>
+      <button id="boss-reset" class="btn" type="button">恢复默认老板键（Alt+Q）</button>
+    </div>
+    <div class="row">
+      <span></span>
+      <button id="keys-reset" class="btn" type="button">恢复默认翻页键（4 / 6）</button>
+    </div>
+    <div class="row">
+      <span>标签页图标（按标签位）</span>
+      <span></span>
+    </div>
+    <div id="favicon-slots"></div>
+    <p class="hint">编码设置只影响之后导入的文件；修改页大小会立即重新分页并保留当前位置；翻页方式决定按一次翻页键前进多少行：整体翻页按当前打开的速记页数量整组翻过，逐行翻页一次一行；伪装时会自动隐藏页面上的全部内容并恢复默认图标；数字键位主键盘与小键盘通用；老板键（默认 Alt+Q）支持 Alt/Ctrl/Shift/Meta 组合键，在普通网页与速记页内生效，chrome:// 内部页不生效。图标「获取」：输入图标或网站网址后点击，会尝试原网址与站点 /favicon.ico，成功后应用到对应标签位。</p>
+  </section>
+</main>
+
+<!-- 目录（章节跳转） -->
+<main id="toc-view" hidden>
+  <header class="topbar">
+    <button id="toc-back" class="btn" type="button">‹ 返回</button>
+    <h1>目录</h1>
+    <span id="toc-count" class="toc-count"></span>
+  </header>
+  <p id="toc-empty" hidden>没有识别到章节标题</p>
+  <ol id="toc-list"></ol>
+</main>
+
+<script src="epub.js"></script>
+<script src="keys.js"></script>
+<script src="reader.js"></script>
+</body>
+</html>

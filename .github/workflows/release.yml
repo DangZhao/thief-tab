@@ -1,0 +1,38 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Pack zip
+        run: zip -r "thief-tab-${GITHUB_REF_NAME}.zip" thief-tab -x '*.DS_Store'
+
+      - name: Sign crx
+        env:
+          CRX_PRIVATE_KEY: ${{ secrets.CRX_PRIVATE_KEY }}
+        run: |
+          printf '%s' "$CRX_PRIVATE_KEY" > "$RUNNER_TEMP/crx.pem"
+          npx -y crx3 -p "$RUNNER_TEMP/crx.pem" -o "thief-tab-${GITHUB_REF_NAME}.crx" thief-tab
+          rm -f "$RUNNER_TEMP/crx.pem"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            thief-tab-*.zip
+            thief-tab-*.crx
+          generate_release_notes: true

@@ -1,0 +1,159 @@
+:root {
+  --bg: #f4f4f5;
+  --panel: #ffffff;
+  --text: #3f3f46;
+  --muted: #71717a;
+  --line: #e4e4e7;
+  --accent: #52525b;
+  --danger: #b91c1c;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1e;
+    --panel: #2c2c2e;
+    --text: #e5e5ea;
+    --muted: #98989f;
+    --line: #3a3a3c;
+    --accent: #d4d4d8;
+    --danger: #f87171; /* 暗色下沿用浅色 #b91c1c 对比度仅约 2.3:1，难以辨认 */
+  }
+}
+* { box-sizing: border-box; }
+/* 作者侧兜底：.row{display:flex} 等作者样式会盖过 UA 的 [hidden]{display:none}（来源优先），
+   导致 hidden 属性失效（如设置页「前缀文案」行加载即闪现） */
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.6;
+}
+main { max-width: 640px; margin: 0 auto; padding: 20px 18px 48px; }
+.topbar { display: flex; align-items: center; gap: 12px; justify-content: space-between; margin-bottom: 14px; }
+.topbar h1 { font-size: 18px; margin: 0; }
+.topbar span { width: 64px; }
+.actions { display: flex; gap: 8px; }
+.btn {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn:hover { border-color: var(--accent); }
+/* 键盘焦点可见性与鼠标悬停一致（列表项的 tabbable 语义由 JS 侧配合） */
+.btn:focus-visible, .book-item:focus-visible, #toc-list li:focus-visible, .key-capture:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.btn-primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.btn-danger { color: var(--danger); }
+#drop-hint { color: var(--muted); font-size: 13px; margin: 4px 0 14px; }
+#shelf-empty { color: var(--muted); text-align: center; margin-top: 48px; }
+#book-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.book-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 14px; cursor: pointer;
+}
+.book-item:hover { border-color: var(--accent); }
+.book-item.current { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.book-info { flex: 1; min-width: 0; }
+.book-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.book-sub { color: var(--muted); font-size: 12.5px; }
+.stage { text-align: center; margin-top: 8vh; }
+#page-indicator { font-size: 28px; font-weight: 700; letter-spacing: 1px; }
+#read-progress { color: var(--muted); margin-top: 6px; }
+.searchbar { display: flex; gap: 6px; align-items: center; margin: 4px auto 10px; max-width: 560px; } /* 与正文同宽居中 */
+.searchbar input {
+  flex: 1;
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 7px 10px;
+}
+#search-count { color: var(--muted); font-size: 12.5px; min-width: 52px; text-align: right; white-space: nowrap; }
+#page-text {
+  margin: 20px auto 10px; max-width: 560px; min-height: 56px;
+  font-size: 19px; line-height: 1.9;
+  white-space: pre-wrap; text-align: left;
+}
+#page-text mark { background: #ffe89c; color: inherit; border-radius: 3px; padding: 0 1px; }
+#page-text mark.cur { background: #ffb350; }
+@media (prefers-color-scheme: dark) {
+  #page-text mark { background: #6b5a1e; color: inherit; }
+  #page-text mark.cur { background: #a4762a; }
+}
+.btn:disabled { opacity: 0.45; cursor: default; }
+/* 伪装态：隐藏全部视图内容（书名/书目列表一并隐藏），只留中性提示。
+   pointer-events:none 是深度防御：visibility:hidden 元素本身不响应鼠标，
+   但未来若有子元素显式 visibility:visible 或焦点残留被程序化点击时仍可穿透 */
+body.disguised main { visibility: hidden; pointer-events: none; }
+body.disguised #disguise-hint { visibility: visible; }
+body.disguised #notice { visibility: hidden; }
+/* 伪装态下拖拽遮罩不显示（伪装面只留中性提示） */
+body.disguised.dragging::after { content: none; }
+.pager { margin-top: 26px; display: flex; gap: 10px; justify-content: center; }
+.hint { color: var(--muted); font-size: 12.5px; margin-top: 22px; }
+/* :not([hidden]) 让显隐回归 HTML hidden 属性（单一事实来源）：
+   裸 .disguise-hint 的 display:inline-block 特异性(0,1,0)会盖过 UA 的 [hidden]{display:none}，
+   任何路径漏设 hidden 时提示会常显 */
+.disguise-hint:not([hidden]) {
+  display: inline-block; background: var(--panel);
+  border: 1px dashed var(--accent); border-radius: 8px;
+  padding: 6px 12px; margin-bottom: 18px;
+}
+body.dragging::after {
+  content: "松开以导入文件";
+  position: fixed; inset: 0; z-index: 9;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(127, 127, 127, 0.35);
+  font-size: 20px;
+}
+#notice {
+  position: fixed; left: 50%; top: 14px; transform: translateX(-50%); z-index: 10;
+  background: var(--panel); border: 1px solid var(--line); color: var(--text);
+  border-radius: 8px; padding: 8px 14px; max-width: 80vw;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+.settings-form {
+  display: flex; flex-direction: column; gap: 12px;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; padding: 16px;
+}
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.row > span { color: var(--muted); }
+.row input[type="number"], .row input[type="text"], .row select {
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 6px 8px; width: 100%; max-width: 220px; min-width: 0; /* 固定 220px 在窄视口会溢出 .row */
+}
+/* flex 项默认 min-width:auto 使 nowrap 文本无法收缩，ellipsis 失效并撑破布局；
+   .book-info 已有 min-width:0，此处补齐 .read-book-name（topbar 中间项）与 .toc-name */
+.read-book-name { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.key-capture { text-align: center; cursor: pointer; }
+.key-capture.capturing { border-color: var(--accent); color: var(--accent); }
+.favicon-slot { display: flex; gap: 6px; align-items: center; }
+.favicon-slot .slot-label { color: var(--muted); font-size: 12.5px; min-width: 70px; }
+.favicon-slot .favicon-url { flex: 1; width: auto; min-width: 120px; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+#favicon-slots { display: flex; flex-direction: column; gap: 8px; }
+/* 目录（章节跳转） */
+.toc-count { color: var(--muted); font-size: 12.5px; text-align: right; }
+#toc-empty { color: var(--muted); text-align: center; margin-top: 48px; }
+#toc-list {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 5px;
+  max-height: 68vh; overflow-y: auto;
+}
+#toc-list li {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 12px; cursor: pointer;
+}
+#toc-list li:hover { border-color: var(--accent); }
+#toc-list li.current { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.toc-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toc-page { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
